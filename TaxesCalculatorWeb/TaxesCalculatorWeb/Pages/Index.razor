@@ -1,0 +1,86 @@
+﻿@page "/"
+@using TaxesCalculatorWeb.Data;
+@inject IDialogService _dialogService;
+@inject ISnackbar _snackbarService;
+
+<MudForm>
+    <MudCardContent>
+        <MudDatePicker Label="Дата реєстрації" DateFormat="dd.MM.yyyy" For="@(()=> model.Date)" @bind-Date="model.Date" /><br>
+        <MudSelect T="string" Label="Тип двигуна" Variant="Variant.Filled" AnchorOrigin="Origin.BottomCenter" @bind-SelectedValues="_selectedEngineTypes" >
+            @foreach(var engtype in _engineTypes)
+            {
+                <MudSelectItem Value="engtype" />
+            }
+        </MudSelect><br>
+        <MudNumericField Style="font-size:20px;" Label="Об'єм двигуна (см3)" For="@(()=> model.Cylinder)" @bind-Value="model.Cylinder" /><br>
+    </MudCardContent>
+    <MudCardActions >
+        <MudButton Style="margin-left:auto; margin-right:auto; height: 50px;" ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="ShowResult">Розрахувати</MudButton>
+    </MudCardActions>
+</MudForm>
+
+@code{
+    private CarDataModel model = new();
+
+    public IEnumerable<string> _engineTypes = new List<string>() { "Дизельний", "Бензиновий", "Газомоторний автомобіль" };
+    public IEnumerable<string> _selectedEngineTypes = new List<string>();
+
+    private async Task ShowResult()
+    {
+        double result;
+        try
+        {
+            model.EngType = GetEngtype(_selectedEngineTypes.First());
+            model.SolveEuro();
+            result = model.Result();
+        }
+        catch
+        {
+            _snackbarService.Add("Помилка при розрахунках, можливо, дані введено не правильно", Severity.Error);
+            return;
+        }
+        await _dialogService.ShowMessageBox("Результат розрахунків", $"Податок становить {result:F2} грн.", yesText: "Ok");
+    }
+
+    private EngineType GetEngtype(string str)
+    {
+        switch (str)
+        {
+            case "Дизельний":
+                return EngineType.Diesel;
+            case "Бензиновий":
+                return EngineType.Gasoline;
+            case "Газомоторний автомобіль":
+                return EngineType.Gas;
+        }
+        throw new Exception("Потрібно вибрати тип двигуна!");
+    }
+
+    public enum EngineType
+    {
+        [Label("Дизельний")]
+        Diesel,
+        [Label("Бензиновий")]
+        Gasoline,
+        [Label("Газомоторний автомобіль")]
+        Gas
+    }
+
+    public enum Euro
+    {
+        [Label("Євро 0")]
+        Euro0,
+        [Label("Євро 1")]
+        Euro1,
+        [Label("Євро 2")]
+        Euro2,
+        [Label("Євро 3")]
+        Euro3,
+        [Label("Євро 4")]
+        Euro4,
+        [Label("Євро 5")]
+        Euro5,
+        [Label("Євро 6")]
+        Euro6
+    }   
+ }
